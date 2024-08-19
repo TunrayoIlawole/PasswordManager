@@ -33,7 +33,7 @@ namespace PasswordManager.Controllers
 
             if (user != null) {
                 if (BCrypt.Net.BCrypt.Verify(data.Password, user.Password)) {
-                    return Ok(new { Token = GenerateToken(data.Email)});
+                    return Ok(new { Token = GenerateToken(user.Email, user.Id)});
                 }
                 return Unauthorized();                    
             }
@@ -41,14 +41,15 @@ namespace PasswordManager.Controllers
 
         }
 
-        private string GenerateToken(string email) {
+        private string GenerateToken(string email, int userId) {
             var securityKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_secretKey));
             var credentials = new SigningCredentials(securityKey, SecurityAlgorithms.HmacSha256);
 
             var tokenDescriptor = new SecurityTokenDescriptor {
-                Subject = new ClaimsIdentity(new[] {
+                Subject = new ClaimsIdentity([
+                    new Claim(ClaimTypes.NameIdentifier, userId.ToString()),
                     new Claim(ClaimTypes.Email, email)
-                }),
+                ]),
                 Expires = DateTime.UtcNow.AddMinutes(30),
                 Issuer = _issuer,
                 Audience = _audience,
