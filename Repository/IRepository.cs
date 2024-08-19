@@ -11,5 +11,8 @@ namespace PasswordManager.Repository
         Task DeleteAsync(int id);
 
         Task<T> GetByValueAsync(Expression<Func<T, bool>> predicate);
+
+        // abstract this?
+        Task<IEnumerable<T>> GetAllByValueAsync(int userId);
     }
 }
