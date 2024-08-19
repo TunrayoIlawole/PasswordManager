@@ -8,20 +8,20 @@ using Microsoft.IdentityModel.Tokens;
 using System.Text;
 using System.Security.Claims;
 using System.IdentityModel.Tokens.Jwt;
+using PasswordManager.Repository;
 
 namespace PasswordManager.Controllers
 {
+    [Route("api/[controller]")]
     [ApiController]
     public class AuthController : ControllerBase {
         private readonly IRepository<User> _userRepository;
-        private readonly IMapper _mapper;
         private readonly string _secretKey;
         private readonly string _issuer;
         private readonly string _audience;
 
-        public AuthController(IRepository<User> userRepository, IMapper mapper, IConfiguration configuration) {
+        public AuthController(IRepository<User> userRepository, IConfiguration configuration) {
             _userRepository = userRepository;
-            _mapper = mapper;
             _secretKey = configuration["Jwt:SecretKey"];
             _issuer = configuration["Jwt:Issuer"];
             _audience = configuration["Jwt:Audience"];

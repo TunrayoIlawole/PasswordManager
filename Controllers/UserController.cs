@@ -4,9 +4,12 @@ using System.Collections.Generic;
 using AutoMapper;
 using PasswordManager.DTOs;
 using BCrypt.Net;
+using PasswordManager.Repository;
 
 namespace PasswordManager.Controllers
 {
+    [Route("api/[controller]")]
+    [ApiController]
     public class UserController : ControllerBase {
         private readonly IRepository<User> _userRepository;
         private readonly IMapper _mapper;
@@ -17,13 +20,20 @@ namespace PasswordManager.Controllers
         }
 
         [HttpPost]
-        public async Task<IActionResult> PostUserAsync(UserCreationDto data) {
-            data.Password = BCrypt.Net.BCrypt.HashPassword(data.Password);
-            var mappedInput = _mapper.Map<User>(data);
-            var user = await _userRepository.AddAsync(mappedInput);
-            var result = _mapper.Map<UserCreationDto>(user);
+        public async Task<IActionResult> PostUserAsync(UserCreationDto data) 
+        {
+            User newUser = new()
+            {
+                Email = data.Email,
+                Username = data.Username,
+                Password = BCrypt.Net.BCrypt.HashPassword(data.Password)
+            };
+            // data.Password = BCrypt.Net.BCrypt.HashPassword(data.Password);
+            // var mappedInput = _mapper.Map<User>(data);
+            var user = await _userRepository.AddAsync(newUser);
+            // var result = _mapper.Map<UserCreationDto>(user);
 
-            return Ok(result);
+            return Ok(user);
         }
 
         
