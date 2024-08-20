@@ -1,20 +1,27 @@
 using System.IdentityModel.Tokens.Jwt;
 using System.Reflection.Metadata;
+using System.Security.Claims;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using PasswordManager.Models;
 using PasswordManager.Repository;
+using PasswordManager.Responses;
 
 namespace PasswordManager.Controllers {
+    [Route("api/[controller]")]
+    [ApiController]
     public class PasswordController: ControllerBase {
-        private readonly IRepository<Password> _passwordRepository;
+        private readonly IPasswordRepository _passwordRepository;
 
-        public PasswordController(IRepository<Password> passwordRepository) {
+        public PasswordController(IPasswordRepository passwordRepository) {
             _passwordRepository = passwordRepository;
         }
 
+        [Authorize]
         [HttpPost]
         public async Task<IActionResult> PostPasswordAsync(PasswordCreationDto data) 
         {
+            ResponseData<Password> response = new ResponseData<Password>();
             var authHeader =Request.Headers["Authorization"].ToString();
 
             if (authHeader != null && authHeader.StartsWith("Bearer ")) {
@@ -29,36 +36,100 @@ namespace PasswordManager.Controllers {
 
                 var password = await _passwordRepository.AddAsync(newPassword);
 
-                // To be updated
-                return Created("", password);
+                response.Status = "success";
+                response.Message = "Website password added successfully";
+                response.Data = password;
+                return Created("", response); // T.B.O
 
             }
 
-            return Unauthorized();
+            response.Status = "error";
+            response.Message = "You are not authorized to access this resource";
+            return Unauthorized(response);
         }
 
-        [HttpGet]
-        public async Task<IActionResult> GetPasswords(int userId) {
-            var passwords = await _passwordRepository.GetAllByValueAsync(userId);
+        // [Authorize]
+        // [HttpGet("")]
+        // public async Task<IActionResult> GetPasswords(int userId) {
+        //     ResponseData<IEnumerable<Password>> response = new ResponseData<IEnumerable<Password>>();
+        //     var passwords = await _passwordRepository.GetAllByValueAsync(userId);
 
-            return Ok(passwords);
-        }
+        //     response.Status = "success";
+        //     response.Message = "Request processed successfully";
+        //     response.Data = passwords;
+        //     return Ok(response);
+        // }
 
-        [HttpGet("/{id}")]
+        [Authorize]
+        [HttpGet("{id}")]
         public async Task<IActionResult> ViewPassword(int id) {
+            ResponseData<Password> response = new ResponseData<Password>();
+
             var password = await _passwordRepository.GetByIdAsync(id);
             if (password == null) {
-                return NotFound();
+                response.Status = "error";
+                response.Message = "Password not found"; // T.B.O
+                return NotFound(response);
             }
-            // decrypt password?
-            return Ok(password);
+
+            response.Status = "success";
+            response.Message = "Password retrieved successfully"; 
+            response.Data = password;
+            return Ok(response);
+        }
+
+        [Authorize]
+        [HttpPut("{id}")]
+        public async Task<IActionResult> UpdatePassword(int id, PasswordCreationDto data) {
+            ResponseData<Password> response = new ResponseData<Password>();
+
+            var existingPassword = await _passwordRepository.GetByIdAsync(id);
+
+            if (existingPassword == null) {
+                response.Status = "error";
+                response.Message = "Password not found"; // T.B.O
+                return BadRequest(response);
+            }
+
+            existingPassword.EmailOrUsername = data.EmailOrUsername;
+            existingPassword.WebsiteUrl = data.WebsiteUrl;
+            existingPassword.WebsitePassword = data.WebsitePassword;
+
+            await _passwordRepository.UpdateAsync(existingPassword);
+
+            response.Status = "success";
+            response.Message = "Password updated successfully"; 
+            response.Data = existingPassword;
+            return Ok(response);
+
+        }
+
+        [Authorize]
+        [HttpDelete("{id}")]
+        public async Task<IActionResult> DeletePassword(int id) {
+            ResponseData<Password> response = new ResponseData<Password>();
+
+            var existingPassword = await _passwordRepository.GetByIdAsync(id);
+
+            if (existingPassword == null) {
+                response.Status = "error";
+                response.Message = "Password with Id " + id + " not found"; // T.B.O
+                return BadRequest(response);
+            }
+
+            await _passwordRepository.DeleteAsync(existingPassword);
+
+            response.Status = "success";
+            response.Message = "Password deleted successfully"; 
+            return Ok(response);
         }
 
         private int decodeJWT(string token) {
             var handler = new JwtSecurityTokenHandler();
             var jwtToken = handler.ReadJwtToken(token);
 
-            var userId = jwtToken.Claims.First(claim => claim.Type == "id").Value;
+            // Add null check
+            var userId = jwtToken.Claims.First(claim => claim.Type == "userId").Value;
 
             return int.Parse(userId);
             // add exception ?

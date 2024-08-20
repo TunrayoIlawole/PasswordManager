@@ -15,16 +15,21 @@ namespace PasswordManager.Controllers
     [Route("api/[controller]")]
     [ApiController]
     public class AuthController : ControllerBase {
-        private readonly IRepository<User> _userRepository;
+        private readonly IUserRepository _userRepository;
         private readonly string _secretKey;
         private readonly string _issuer;
         private readonly string _audience;
 
-        public AuthController(IRepository<User> userRepository, IConfiguration configuration) {
+        private readonly IConfiguration _configuration;
+        private readonly ILogger<AuthController> _logger;
+
+        public AuthController(IUserRepository userRepository, IConfiguration configuration, ILogger<AuthController> logger) {
+            _configuration = configuration;
             _userRepository = userRepository;
             _secretKey = configuration["Jwt:SecretKey"];
             _issuer = configuration["Jwt:Issuer"];
             _audience = configuration["Jwt:Audience"];
+            _logger = logger;
         }
 
         [HttpPost("login")]
@@ -37,20 +42,21 @@ namespace PasswordManager.Controllers
                 }
                 return Unauthorized();                    
             }
-            return NotFound();
+            return NotFound("Email " + data.Email + "not found");
 
         }
 
         private string GenerateToken(string email, int userId) {
+            Console.WriteLine(_secretKey);
             var securityKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_secretKey));
             var credentials = new SigningCredentials(securityKey, SecurityAlgorithms.HmacSha256);
 
             var tokenDescriptor = new SecurityTokenDescriptor {
                 Subject = new ClaimsIdentity([
-                    new Claim(ClaimTypes.NameIdentifier, userId.ToString()),
+                    new Claim("userId", userId.ToString()),
                     new Claim(ClaimTypes.Email, email)
                 ]),
-                Expires = DateTime.UtcNow.AddMinutes(30),
+                Expires = DateTime.UtcNow.AddHours(1),
                 Issuer = _issuer,
                 Audience = _audience,
                 SigningCredentials = credentials
