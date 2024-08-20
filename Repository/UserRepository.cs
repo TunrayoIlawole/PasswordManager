@@ -5,7 +5,7 @@ using PasswordManager.Models;
 
 namespace PasswordManager.Repository
 {
-    public class UserRepository : IRepository<User> {
+    public class UserRepository : IUserRepository {
 
         private readonly PasswordManagerContext _dbContext;
         private readonly DbSet<User> _dbSet;
@@ -28,20 +28,6 @@ namespace PasswordManager.Repository
             await _dbContext.SaveChangesAsync();
 
             return entity;
-        }
-
-        public async Task UpdateAsync(User entity) {
-            _dbSet.Update(entity);
-            await _dbContext.SaveChangesAsync();
-        }
-
-        public async Task DeleteAsync(int id) {
-            var entity = await _dbSet.FindAsync(id);
-            if (entity != null)
-            {
-                _dbSet.Remove(entity);
-                await _dbContext.SaveChangesAsync();
-            }
         }
 
         public async Task<User> GetByValueAsync(Expression<Func<User, bool>> predicate) {

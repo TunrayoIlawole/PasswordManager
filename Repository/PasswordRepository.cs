@@ -5,7 +5,7 @@ using PasswordManager.Models;
 
 namespace PasswordManager.Repository
 {
-    public class PasswordRepository : IRepository<Password> {
+    public class PasswordRepository : IPasswordRepository {
                private readonly PasswordManagerContext _dbContext;
         private readonly DbSet<Password> _dbSet;
 
@@ -34,13 +34,9 @@ namespace PasswordManager.Repository
             await _dbContext.SaveChangesAsync();
         }
 
-        public async Task DeleteAsync(int id) {
-            var entity = await _dbSet.FindAsync(id);
-            if (entity != null)
-            {
-                _dbSet.Remove(entity);
-                await _dbContext.SaveChangesAsync();
-            }
+        public async Task DeleteAsync(Password entity) {
+            _dbSet.Remove(entity);
+            await _dbContext.SaveChangesAsync();
         }
 
         public async Task<Password> GetByValueAsync(Expression<Func<Password, bool>> predicate) {
