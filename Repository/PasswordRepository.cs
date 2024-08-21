@@ -14,7 +14,7 @@ namespace PasswordManager.Repository
             _dbSet = context.Set<Password>();
         }
 
-        public async Task<IEnumerable<Password>> GetAllAsync() {
+        public async Task<List<Password>> GetAllAsync() {
             return await _dbSet.ToListAsync();
         }
 
@@ -29,9 +29,10 @@ namespace PasswordManager.Repository
             return entity;
         }
 
-        public async Task UpdateAsync(Password entity) {
+        public async Task<Password> UpdateAsync(Password entity) {
             _dbSet.Update(entity);
             await _dbContext.SaveChangesAsync();
+            return entity;
         }
 
         public async Task DeleteAsync(Password entity) {

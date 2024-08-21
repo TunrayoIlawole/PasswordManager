@@ -6,62 +6,76 @@ using PasswordManager.DTOs;
 using PasswordManager.Repository;
 using PasswordManager.Responses;
 using Microsoft.AspNetCore.Authorization;
+using PasswordManager.Services;
 
 namespace PasswordManager.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
     public class UserController : ControllerBase {
-        private readonly IUserRepository _userRepository;
-        private readonly IPasswordRepository _passwordRepository;
-        private readonly IMapper _mapper;
 
-        public UserController(IUserRepository userRepository, IPasswordRepository passwordRepository, IMapper mapper) {
-            _userRepository = userRepository;
-            _passwordRepository = passwordRepository;
-            _mapper = mapper;
+        private readonly IUserService _userService;
+        private readonly IPasswordService _passwordService;
+
+        public UserController(IUserService userService) {
+            _userService = userService;
         }
 
         [HttpPost]
         public async Task<IActionResult> PostUserAsync(UserCreationDto data) 
         {
-            ResponseData<User> response = new ResponseData<User>();
+            ResponseData<UserCreatedDto> response = new ResponseData<UserCreatedDto>();
+            try {
+                UserCreatedDto user = await _userService.AddUser(data);
+                response.Status = "success";
+                response.Message = "User created successfully";
+                response.Data = user;
 
-            var existingUser = await _userRepository.GetByValueAsync(u => u.Email == data.Email);
-            
-            if (existingUser != null) {
+                return Created("", response);
+            } catch (DuplicateEntityException e) {
                 response.Status = "error";
-                response.Message = "This user already exists"; // T.B.O
+                response.Message = e.Message;
                 return BadRequest(response);
+            } catch (Exception e) {
+                response.Status = "error";
+                response.Message = e.Message;
+                return StatusCode(StatusCodes.Status500InternalServerError, response);
             }
-
-            User newUser = new()
-            {
-                Email = data.Email,
-                Username = data.Username,
-                Password = BCrypt.Net.BCrypt.HashPassword(data.Password)
-            };
-
-            var user = await _userRepository.AddAsync(newUser);
-            response.Status = "success";
-            response.Message = "User created successfully";
-            response.Data = user;
-
-            return Ok(response);
         }
 
         [Authorize]
         [HttpGet("{userId}/passwords")]
         public async Task<IActionResult> GetPasswords(int userId) {
 
-            // use id of logged in user?
-            ResponseData<IEnumerable<Password>> response = new ResponseData<IEnumerable<Password>>();
-            var passwords = await _passwordRepository.GetAllByValueAsync(userId);
+            ResponseData<List<PasswordDto>> response = new ResponseData<List<PasswordDto>>();
 
-            response.Status = "success";
-            response.Message = "Request processed successfully";
-            response.Data = passwords;
-            return Ok(response);
+            try {
+                var authHeader = Request.Headers["Authorization"].ToString();
+
+                if (authHeader != null && authHeader.StartsWith("Bearer ")) {
+                    var token = authHeader.Substring("Bearer ".Length).Trim();
+                    
+                    List<PasswordDto> passwords = await _passwordService.GetPasswords(token);
+
+                    response.Status = "success";
+                    response.Message = "Website password added successfully";
+                    response.Data = passwords;
+                    return Ok(response);
+
+                } else {
+                    response.Status = "error";
+                    response.Message = "You are not authorized to access this resource";
+                    return Unauthorized(response);
+                }
+            } catch (InvalidOperationException e) {
+                    response.Status = "error";
+                    response.Message = e.Message;
+                    return Unauthorized(response);
+            } catch (Exception e) {
+                response.Status = "error";
+                response.Message = e.Message;
+                return StatusCode(StatusCodes.Status500InternalServerError, response);
+            }
         }
 
     }

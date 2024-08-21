@@ -7,6 +7,7 @@ using System.Text;
 using System.Text.Json.Serialization;
 using PasswordManager.Models;
 using PasswordManager.Repository;
+using PasswordManager.Services;
 
 DotEnv.Load();
 
@@ -38,6 +39,9 @@ builder.Services.AddControllers().AddJsonOptions(options =>
 
 builder.Services.AddScoped<IUserRepository, UserRepository>();
 builder.Services.AddScoped<IPasswordRepository, PasswordRepository>();
+builder.Services.AddScoped<IUserService, UserService>();
+builder.Services.AddScoped<IPasswordService, PasswordService>();
+builder.Services.AddScoped<IAuthService, AuthService>();
 
 builder.Services.AddAutoMapper(AppDomain.CurrentDomain.GetAssemblies());
 

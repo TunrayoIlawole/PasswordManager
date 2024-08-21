@@ -5,10 +5,10 @@ namespace PasswordManager.Repository
 {
     public interface IPasswordRepository
     {
-        Task<IEnumerable<Password>> GetAllAsync();
+        Task<List<Password>> GetAllAsync();
         Task<Password> GetByIdAsync(int id);
         Task<Password> AddAsync(Password entity);
-        Task UpdateAsync(Password entity);
+        Task<Password> UpdateAsync(Password entity);
         Task DeleteAsync(Password entity);
 
         Task<Password> GetByValueAsync(Expression<Func<Password, bool>> predicate);
