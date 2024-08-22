@@ -1,5 +1,5 @@
 using Microsoft.AspNetCore.Mvc;
-using PasswordManager.DTOs;
+using PasswordManager.Models.DTOs;
 using PasswordManager.Services;
 using PasswordManager.Responses;
 
@@ -22,22 +22,22 @@ namespace PasswordManager.Controllers
 
             try {
                 string token = await _authService.SignInUser(data);
-                response.Status = "success";
-                response.Message = "User logged in successfully";
+                response.Status = ResponseMessages.Success;
+                response.Message = ResponseMessages.LoginSuccess;
                 response.Data = token;
 
                 return Ok(response);
             } catch (UnauthorizedAccessException e) {
-                response.Status = "error";
+                response.Status = ResponseMessages.Failure;
                 response.Message = e.Message;
                 return Unauthorized(response);
             } catch (InvalidEntityException e) {
-                response.Status = "error";
+                response.Status = ResponseMessages.Failure;
                 response.Message = e.Message;
                 return BadRequest(response);
 
             } catch (Exception e) {
-                response.Status = "error";
+                response.Status = ResponseMessages.Failure;
                 response.Message = e.Message;
                 return StatusCode(StatusCodes.Status500InternalServerError, response);
             }

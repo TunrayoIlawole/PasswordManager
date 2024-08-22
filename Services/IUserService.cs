@@ -1,5 +1,5 @@
 using System.Linq.Expressions;
-using PasswordManager.DTOs;
+using PasswordManager.Models.DTOs;
 using PasswordManager.Models;
 
 namespace PasswordManager.Services {

@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using PasswordManager.Models;
+using PasswordManager.Models.DTOs;
 using PasswordManager.Responses;
 using PasswordManager.Services;
 
@@ -30,7 +31,7 @@ namespace PasswordManager.Controllers {
                     response.Status = "success";
                     response.Message = "Website password added successfully";
                     response.Data = password;
-                    return Created("", response); // T.B.O
+                    return Created(password.Id.ToString(), response); 
 
                 } else {
                     response.Status = "error";
@@ -51,14 +52,14 @@ namespace PasswordManager.Controllers {
         [Authorize]
         [HttpGet("{id}")]
         public async Task<IActionResult> ViewPassword(int id) {
-            ResponseData<PasswordFullDto> response = new ResponseData<PasswordFullDto>();
+            ResponseData<PasswordDetailDto> response = new ResponseData<PasswordDetailDto>();
 
             try {
                 var authHeader = Request.Headers["Authorization"].ToString();
                 if (authHeader != null && authHeader.StartsWith("Bearer ")) {
                     var token = authHeader.Substring("Bearer ".Length).Trim();
 
-                    PasswordFullDto password = await _passwordService.GetPassword(id, token);
+                    PasswordDetailDto password = await _passwordService.GetPassword(id, token);
                     response.Status = "success";
                     response.Message = "Password retrieved successfully"; 
                     response.Data = password;
@@ -74,6 +75,7 @@ namespace PasswordManager.Controllers {
                 response.Message = e.Message;
                 return NotFound(response);
             } catch (Exception e) {
+                Console.WriteLine(e.StackTrace);
                 response.Status = "error";
                 response.Message = e.Message;
                 return StatusCode(StatusCodes.Status500InternalServerError, response);
@@ -85,12 +87,22 @@ namespace PasswordManager.Controllers {
         public async Task<IActionResult> UpdatePassword(int id, PasswordCreationDto data) {
             ResponseData<PasswordDto> response = new ResponseData<PasswordDto>();
             try {
-                PasswordDto password = await _passwordService.UpdatePassword(id, data);
+                var authHeader = Request.Headers["Authorization"].ToString();
+                if (authHeader != null && authHeader.StartsWith("Bearer ")) {
+                    var token = authHeader.Substring("Bearer ".Length).Trim();
 
-                response.Status = "success";
-                response.Message = "Password updated successfully"; 
-                response.Data = password;
-                return Ok(response);
+                    PasswordDto password = await _passwordService.UpdatePassword(id, data, token);
+
+                    response.Status = "success";
+                    response.Message = "Password updated successfully"; 
+                    response.Data = password;
+                    return Ok(response);
+                } else {
+                    response.Status = "error";
+                    response.Message = "You are not authorized to access this resource";
+                    return Unauthorized(response);
+                }
+                
             } catch (InvalidEntityException e) {
                 response.Status = "error";
                 response.Message = e.Message;
@@ -109,11 +121,20 @@ namespace PasswordManager.Controllers {
             ResponseData<Password> response = new ResponseData<Password>();
 
             try {
-                await _passwordService.DeletePassword(id);
+                var authHeader = Request.Headers["Authorization"].ToString();
+                if (authHeader != null && authHeader.StartsWith("Bearer ")) {
+                    var token = authHeader.Substring("Bearer ".Length).Trim();
 
-                response.Status = "success";
-                response.Message = "Password deleted successfully"; 
-                return Ok(response);
+                    await _passwordService.DeletePassword(id, token);
+
+                    response.Status = "success";
+                    response.Message = "Password deleted successfully"; 
+                    return Ok(response);
+                } else {
+                    response.Status = "error";
+                    response.Message = "You are not authorized to access this resource";
+                    return Unauthorized(response);
+                }
             } catch (InvalidEntityException e) {
                 response.Status = "error";
                 response.Message = e.Message;
