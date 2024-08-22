@@ -1,5 +1,4 @@
-using PasswordManager.DTOs;
-using PasswordManager.Models;
+using PasswordManager.Models.DTOs;
 
 namespace PasswordManager.Services {
 public interface IAuthService {

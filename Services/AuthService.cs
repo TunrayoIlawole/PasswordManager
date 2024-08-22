@@ -2,7 +2,7 @@ using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
 using Microsoft.IdentityModel.Tokens;
-using PasswordManager.DTOs;
+using PasswordManager.Models.DTOs;
 using PasswordManager.Models;
 using PasswordManager.Repository;
 

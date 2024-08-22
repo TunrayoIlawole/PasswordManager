@@ -1,5 +1,4 @@
-
-namespace PasswordManager.DTOs {
+namespace PasswordManager.Models.DTOs {
 
     public class UserCreationDto {
 
