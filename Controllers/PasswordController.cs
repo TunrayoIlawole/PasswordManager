@@ -28,22 +28,22 @@ namespace PasswordManager.Controllers {
                     
                     PasswordDto password = await _passwordService.AddPassword(data, token);
 
-                    response.Status = "success";
-                    response.Message = "Website password added successfully";
+                    response.Status = ResponseMessages.Success;;
+                    response.Message = ResponseMessages.SucessfullAction("Website password", "added"); 
                     response.Data = password;
                     return Created(password.Id.ToString(), response); 
 
                 } else {
-                    response.Status = "error";
-                    response.Message = "You are not authorized to access this resource";
+                    response.Status = ResponseMessages.Failure;;
+                    response.Message = ResponseMessages.Unauthorized;
                     return Unauthorized(response);
                 }
             } catch (InvalidOperationException e) {
-                response.Status = "error";
+                response.Status = ResponseMessages.Failure;
                 response.Message = e.Message;
                 return Unauthorized(response);
             } catch (Exception e) {
-                response.Status = "error";
+                response.Status = ResponseMessages.Failure;
                 response.Message = e.Message;
                 return StatusCode(StatusCodes.Status500InternalServerError, response);
             }
@@ -60,23 +60,24 @@ namespace PasswordManager.Controllers {
                     var token = authHeader.Substring("Bearer ".Length).Trim();
 
                     PasswordDetailDto password = await _passwordService.GetPassword(id, token);
-                    response.Status = "success";
-                    response.Message = "Password retrieved successfully"; 
+                    response.Status = ResponseMessages.Success;
+                    response.Message = ResponseMessages.SucessfullAction("Password", "retrieved"); 
                     response.Data = password;
                     return Ok(response);
                 } else {
-                    response.Status = "error";
-                    response.Message = "You are not authorized to access this resource";
+                    response.Status = ResponseMessages.Failure;
+                    response.Message = ResponseMessages.Unauthorized;
                     return Unauthorized(response);
                 }
 
             } catch (InvalidEntityException e) {
-                response.Status = "error";
+                response.Status = ResponseMessages.Failure;
                 response.Message = e.Message;
                 return NotFound(response);
             } catch (Exception e) {
+                // log exception
                 Console.WriteLine(e.StackTrace);
-                response.Status = "error";
+                response.Status = ResponseMessages.Failure;
                 response.Message = e.Message;
                 return StatusCode(StatusCodes.Status500InternalServerError, response);
             }
@@ -93,22 +94,22 @@ namespace PasswordManager.Controllers {
 
                     PasswordDto password = await _passwordService.UpdatePassword(id, data, token);
 
-                    response.Status = "success";
-                    response.Message = "Password updated successfully"; 
+                    response.Status = ResponseMessages.Success;
+                    response.Message = ResponseMessages.SucessfullAction("Password", "updated"); 
                     response.Data = password;
                     return Ok(response);
                 } else {
-                    response.Status = "error";
-                    response.Message = "You are not authorized to access this resource";
+                    response.Status = ResponseMessages.Failure;
+                    response.Message = ResponseMessages.Unauthorized;
                     return Unauthorized(response);
                 }
                 
             } catch (InvalidEntityException e) {
-                response.Status = "error";
+                response.Status = ResponseMessages.Failure;
                 response.Message = e.Message;
                 return BadRequest(response);
             } catch (Exception e) {
-                response.Status = "error";
+                response.Status = ResponseMessages.Failure;
                 response.Message = e.Message;
                 return StatusCode(StatusCodes.Status500InternalServerError, response);
             }
@@ -127,20 +128,20 @@ namespace PasswordManager.Controllers {
 
                     await _passwordService.DeletePassword(id, token);
 
-                    response.Status = "success";
-                    response.Message = "Password deleted successfully"; 
+                    response.Status = ResponseMessages.Success;
+                    response.Message = ResponseMessages.SucessfullAction("Password", "deleted"); 
                     return Ok(response);
                 } else {
-                    response.Status = "error";
-                    response.Message = "You are not authorized to access this resource";
+                    response.Status = ResponseMessages.Failure;
+                    response.Message = ResponseMessages.Unauthorized;
                     return Unauthorized(response);
                 }
             } catch (InvalidEntityException e) {
-                response.Status = "error";
+                response.Status = ResponseMessages.Failure;
                 response.Message = e.Message;
                 return BadRequest(response);
             } catch (Exception e) {
-                response.Status = "error";
+                response.Status = ResponseMessages.Failure;
                 response.Message = e.Message;
                 return StatusCode(StatusCodes.Status500InternalServerError, response);
             }
