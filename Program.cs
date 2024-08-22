@@ -37,6 +37,15 @@ builder.Services.AddControllers().AddJsonOptions(options =>
     options.JsonSerializerOptions.ReferenceHandler = ReferenceHandler.IgnoreCycles;
 });
 
+builder.Services.AddSingleton<EncryptionService>(sp => {
+    string base64Key = Environment.GetEnvironmentVariable("ENCRYPTION_KEY");
+
+    if (string.IsNullOrEmpty(base64Key)) {
+        throw new InvalidOperationException("Key not set");
+    }
+    return new EncryptionService(base64Key);
+});
+
 builder.Services.AddScoped<IUserRepository, UserRepository>();
 builder.Services.AddScoped<IPasswordRepository, PasswordRepository>();
 builder.Services.AddScoped<IUserService, UserService>();
