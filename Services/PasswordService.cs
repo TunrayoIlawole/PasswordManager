@@ -1,25 +1,28 @@
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Cryptography;
 using System.Text;
-using Npgsql.Internal;
 using PasswordManager.Models;
+using PasswordManager.Models.DTOs;
 using PasswordManager.Repository;
+using PasswordManager.Responses;
 
 namespace PasswordManager.Services {
 
     public class PasswordService : IPasswordService {
 
         private readonly IPasswordRepository _passwordRepository;
+        private readonly EncryptionService _encryptionService;
 
-        public PasswordService(IPasswordRepository passwordRepository) {
+        public PasswordService(IPasswordRepository passwordRepository, EncryptionService encryptionService) {
             _passwordRepository = passwordRepository;
+            _encryptionService = encryptionService;
         }
 
         public async Task<PasswordDto> AddPassword(PasswordCreationDto passwordDto, string token) {
+
             int userId = decodeJWT(token);
-            Aes aes = Aes.Create();
-            byte[] encrypted = EncryptPassword(passwordDto.WebsitePassword, aes.Key, aes.IV);
-            String encryptedPassword = Convert.ToBase64String(encrypted);
+
+            string encryptedPassword = _encryptionService.EncryptPassword(passwordDto.WebsitePassword);
             Password newPassword = new()
                 {
                     EmailOrUsername = passwordDto.EmailOrUsername,
@@ -31,22 +34,30 @@ namespace PasswordManager.Services {
             var password = await _passwordRepository.AddAsync(newPassword);
 
             return new PasswordDto {
+                Id = password.Id,
                 WebsiteUrl = password.WebsiteUrl,
                 EmailOrUsername = password.EmailOrUsername,
                 UserId = userId
             };
         }
 
-        public async Task<List<PasswordDto>> GetPasswords(string token) {
-            var userId = decodeJWT(token);
+        public async Task<List<PasswordDto>> GetPasswords(int userId, string token) {
+            var derivedUserId = decodeJWT(token);
+            Console.WriteLine("It got here");
+            Console.WriteLine(derivedUserId);
 
-            var passwordsResult = await _passwordRepository.GetAllByValueAsync(userId);
+            if (derivedUserId != userId) {
+                throw new InvalidEntityException(ResponseMessages.InvalidPasswords);
+            }
+
+            var passwordsResult = await _passwordRepository.GetAllByValueAsync(derivedUserId);
 
             List<PasswordDto> passwords = new List<PasswordDto>();
 
             foreach (Password password in passwordsResult)
             {
                 passwords.Add(new PasswordDto{
+                    Id = password.Id,
                     EmailOrUsername = password.EmailOrUsername,
                     WebsiteUrl = password.WebsiteUrl,
                     UserId = password.UserId
@@ -57,30 +68,32 @@ namespace PasswordManager.Services {
 
         }
 
-        public async Task<PasswordFullDto> GetPassword(int id, string token) {
+        public async Task<PasswordDetailDto> GetPassword(int id, string token) {
             int userId = decodeJWT(token);
 
             var password = await _passwordRepository.GetByIdAsync(id);
-
-            Aes aes = Aes.Create();
-            byte[] bytes = Encoding.UTF8.GetBytes(password.WebsitePassword);
-            string decrypted = DecryptPassword(bytes, aes.Key, aes.IV);
+            string decryptedPassword = _encryptionService.DecryptPassword(password.WebsitePassword);
 
             if (password == null || userId != password.UserId) {
-                throw new InvalidEntityException("Password not found");
+                throw new InvalidEntityException(ResponseMessages.InvalidPassword);
             }
 
-            return new PasswordFullDto {
+            return new PasswordDetailDto {
                 EmailOrUsername = password.EmailOrUsername,
                 WebsiteUrl = password.WebsiteUrl,
-                WebsitePassword = decrypted,
+                WebsitePassword = decryptedPassword,
                 UserId = password.UserId
 
             };
         }
 
-        public async Task<PasswordDto> UpdatePassword(int id, PasswordCreationDto passwordDto) {
-            var existingPassword = await _passwordRepository.GetByIdAsync(id) ?? throw new InvalidEntityException("Password " + id + " does not exist");
+        public async Task<PasswordDto> UpdatePassword(int id, PasswordCreationDto passwordDto, string token) {
+            var existingPassword = await _passwordRepository.GetByIdAsync(id);
+            int userId = decodeJWT(token);
+
+            if (existingPassword == null || existingPassword.UserId != userId) {
+                throw new InvalidEntityException(ResponseMessages.InvalidPassword);
+            }
 
             existingPassword.EmailOrUsername = passwordDto.EmailOrUsername;
             existingPassword.WebsiteUrl = passwordDto.WebsiteUrl;
@@ -89,14 +102,20 @@ namespace PasswordManager.Services {
             Password updatedPassword = await _passwordRepository.UpdateAsync(existingPassword);
 
             return new PasswordDto {
+                Id = updatedPassword.Id,
                 EmailOrUsername = updatedPassword.EmailOrUsername,
                 WebsiteUrl = updatedPassword.WebsiteUrl,
                 UserId = updatedPassword.UserId
             };
         }
 
-        public async Task DeletePassword(int id) {
-            var existingPassword = await _passwordRepository.GetByIdAsync(id) ?? throw new InvalidEntityException("Password " + id + " does not exist");
+        public async Task DeletePassword(int id, string token) {
+            var existingPassword = await _passwordRepository.GetByIdAsync(id);
+            int userId = decodeJWT(token);
+
+            if (existingPassword == null || existingPassword.UserId != userId) {
+                throw new InvalidEntityException(ResponseMessages.InvalidPassword);
+            }
 
             await _passwordRepository.DeleteAsync(existingPassword);
         }
@@ -109,7 +128,7 @@ namespace PasswordManager.Services {
             var userIdClaim = jwtToken.Claims.First(claim => claim.Type == "userId");
 
             if (userIdClaim == null) {
-                throw new InvalidOperationException("The 'userId' claim is missing");
+                throw new InvalidOperationException(ResponseMessages.InvalidClaim("userId"));
             }
             var userId = userIdClaim.Value;
 
@@ -117,44 +136,47 @@ namespace PasswordManager.Services {
             
         }
 
-        private static byte[] EncryptPassword(String password, byte[] key, byte[] iv) {
-            byte[] encrypted;
+        // private static byte[] EncryptPassword(String password, byte[] key, byte[] iv) {
+        //     byte[] encrypted;
 
-            using (Aes aes = Aes.Create()) {
-                aes.Key = key;
-                aes.IV = iv;
+        //     using (Aes aes = Aes.Create()) {
+        //         aes.Key = key;
+        //         aes.IV = iv;
 
-                using (MemoryStream memoryStream = new MemoryStream()) {
-                    using (CryptoStream cryptoStream = new CryptoStream(memoryStream, aes.CreateEncryptor(), CryptoStreamMode.Write)) {
-                        using (StreamWriter streamWriter = new StreamWriter(cryptoStream)) {
-                            streamWriter.Write(password);
-                        }
-                        encrypted = memoryStream.ToArray();
-                    }
-                }
-            }
+        //         using (MemoryStream memoryStream = new MemoryStream()) {
+        //             using (CryptoStream cryptoStream = new CryptoStream(memoryStream, aes.CreateEncryptor(), CryptoStreamMode.Write)) {
+        //                 using (StreamWriter streamWriter = new StreamWriter(cryptoStream)) {
+        //                     streamWriter.Write(password);
+        //                 }
+        //                 encrypted = memoryStream.ToArray();
+        //             }
+        //         }
+        //     }
 
-            return encrypted;
-        }
+        //     return encrypted;
+        // }
 
-        private static string DecryptPassword(byte[] encodedText, byte[] key, byte[] iv) {
-            string decrypted;
+        // private static string DecryptPassword(byte[] encodedText, byte[] key, byte[] iv) {
+        //     string decrypted;
 
-            using (Aes aes = Aes.Create()) {
-                aes.Key = key;
-                aes.IV = iv;
+        //     using (Aes aes = Aes.Create()) {
+        //         aes.Key = key;
+        //         aes.IV = iv;
 
-                using (MemoryStream memoryStream = new MemoryStream(encodedText)) {
-                    using (CryptoStream cryptoStream = new CryptoStream(memoryStream, aes.CreateDecryptor(), CryptoStreamMode.Read)) {
-                        using (StreamReader streamReader = new StreamReader(cryptoStream)) {
-                            decrypted = streamReader.ReadToEnd();
-                        }
-                    }
-                }
-            }
+        //         using (MemoryStream memoryStream = new MemoryStream(encodedText)) {
+        //             using (CryptoStream cryptoStream = new CryptoStream(memoryStream, aes.CreateDecryptor(), CryptoStreamMode.Read)) {
+        //                 using (StreamReader streamReader = new StreamReader(cryptoStream)) {
+        //                     decrypted = streamReader.ReadToEnd();
+        //                 }
+        //             }
+        //         }
+        //     }
 
-            return decrypted;
-        }
+        //     return decrypted;
+        // }
+
+
+
 
 
     }
