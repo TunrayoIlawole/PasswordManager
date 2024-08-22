@@ -1,9 +1,5 @@
 using Microsoft.AspNetCore.Mvc;
-using PasswordManager.Models;
-using System.Collections.Generic;
-using AutoMapper;
-using PasswordManager.DTOs;
-using PasswordManager.Repository;
+using PasswordManager.Models.DTOs;
 using PasswordManager.Responses;
 using Microsoft.AspNetCore.Authorization;
 using PasswordManager.Services;
@@ -17,8 +13,9 @@ namespace PasswordManager.Controllers
         private readonly IUserService _userService;
         private readonly IPasswordService _passwordService;
 
-        public UserController(IUserService userService) {
+        public UserController(IUserService userService, IPasswordService passwordService) {
             _userService = userService;
+            _passwordService = passwordService;
         }
 
         [HttpPost]
@@ -27,17 +24,18 @@ namespace PasswordManager.Controllers
             ResponseData<UserCreatedDto> response = new ResponseData<UserCreatedDto>();
             try {
                 UserCreatedDto user = await _userService.AddUser(data);
-                response.Status = "success";
-                response.Message = "User created successfully";
+                response.Status = ResponseMessages.Success;
+                response.Message = ResponseMessages.SucessfullAction("User", "created"); 
                 response.Data = user;
 
-                return Created("", response);
+                return Created(user.Id.ToString(), response);
             } catch (DuplicateEntityException e) {
-                response.Status = "error";
+                response.Status = ResponseMessages.Failure;
                 response.Message = e.Message;
                 return BadRequest(response);
             } catch (Exception e) {
-                response.Status = "error";
+                Console.WriteLine(e.StackTrace);
+                response.Status = ResponseMessages.Failure;
                 response.Message = e.Message;
                 return StatusCode(StatusCodes.Status500InternalServerError, response);
             }
@@ -55,24 +53,24 @@ namespace PasswordManager.Controllers
                 if (authHeader != null && authHeader.StartsWith("Bearer ")) {
                     var token = authHeader.Substring("Bearer ".Length).Trim();
                     
-                    List<PasswordDto> passwords = await _passwordService.GetPasswords(token);
+                    List<PasswordDto> passwords = await _passwordService.GetPasswords(userId, token);
 
-                    response.Status = "success";
-                    response.Message = "Website password added successfully";
+                    response.Status = ResponseMessages.Success;
+                    response.Message = ResponseMessages.SucessfullAction("User passwords", "retrieved"); 
                     response.Data = passwords;
                     return Ok(response);
 
                 } else {
-                    response.Status = "error";
-                    response.Message = "You are not authorized to access this resource";
+                    response.Status = ResponseMessages.Failure;
+                    response.Message = ResponseMessages.Unauthorized;
                     return Unauthorized(response);
                 }
-            } catch (InvalidOperationException e) {
-                    response.Status = "error";
+            } catch (InvalidEntityException e) {
+                    response.Status = ResponseMessages.Failure;
                     response.Message = e.Message;
                     return Unauthorized(response);
             } catch (Exception e) {
-                response.Status = "error";
+                response.Status = ResponseMessages.Failure;
                 response.Message = e.Message;
                 return StatusCode(StatusCodes.Status500InternalServerError, response);
             }
