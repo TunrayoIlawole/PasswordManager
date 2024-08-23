@@ -1,7 +1,7 @@
 using System.Security.Cryptography;
 
 namespace PasswordManager.Services {
-    public class EncryptionService {
+    public class EncryptionService : IEncryptionService {
         private readonly byte[] _key;
 
         public EncryptionService(string keyString) {
