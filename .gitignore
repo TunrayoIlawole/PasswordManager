@@ -1,4 +1,6 @@
-/bin
-/obj
-.env
+obj/Debug/net8.0/PasswordManager.GlobalUsings.g.cs
+obj/Debug/net8.0/.NETCoreApp,Version=v8.0.AssemblyAttributes.cs
+obj/Debug/net8.0/PasswordManager.AssemblyInfo.cs
+obj/Debug/net8.0/PasswordManager.AssemblyInfoInputs.cache
+obj/Debug/net8.0/PasswordManager.GeneratedMSBuildEditorConfig.editorconfig
 .DS_Store

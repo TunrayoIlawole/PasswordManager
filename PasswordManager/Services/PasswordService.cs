@@ -1,6 +1,4 @@
 using System.IdentityModel.Tokens.Jwt;
-using System.Security.Cryptography;
-using System.Text;
 using PasswordManager.Models;
 using PasswordManager.Models.DTOs;
 using PasswordManager.Repository;
@@ -135,48 +133,6 @@ namespace PasswordManager.Services {
             return int.Parse(userId);
             
         }
-
-        // private static byte[] EncryptPassword(String password, byte[] key, byte[] iv) {
-        //     byte[] encrypted;
-
-        //     using (Aes aes = Aes.Create()) {
-        //         aes.Key = key;
-        //         aes.IV = iv;
-
-        //         using (MemoryStream memoryStream = new MemoryStream()) {
-        //             using (CryptoStream cryptoStream = new CryptoStream(memoryStream, aes.CreateEncryptor(), CryptoStreamMode.Write)) {
-        //                 using (StreamWriter streamWriter = new StreamWriter(cryptoStream)) {
-        //                     streamWriter.Write(password);
-        //                 }
-        //                 encrypted = memoryStream.ToArray();
-        //             }
-        //         }
-        //     }
-
-        //     return encrypted;
-        // }
-
-        // private static string DecryptPassword(byte[] encodedText, byte[] key, byte[] iv) {
-        //     string decrypted;
-
-        //     using (Aes aes = Aes.Create()) {
-        //         aes.Key = key;
-        //         aes.IV = iv;
-
-        //         using (MemoryStream memoryStream = new MemoryStream(encodedText)) {
-        //             using (CryptoStream cryptoStream = new CryptoStream(memoryStream, aes.CreateDecryptor(), CryptoStreamMode.Read)) {
-        //                 using (StreamReader streamReader = new StreamReader(cryptoStream)) {
-        //                     decrypted = streamReader.ReadToEnd();
-        //                 }
-        //             }
-        //         }
-        //     }
-
-        //     return decrypted;
-        // }
-
-
-
 
 
     }
