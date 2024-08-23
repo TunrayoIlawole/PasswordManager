@@ -9,9 +9,9 @@ namespace PasswordManager.Services {
     public class PasswordService : IPasswordService {
 
         private readonly IPasswordRepository _passwordRepository;
-        private readonly EncryptionService _encryptionService;
+        private readonly IEncryptionService _encryptionService;
 
-        public PasswordService(IPasswordRepository passwordRepository, EncryptionService encryptionService) {
+        public PasswordService(IPasswordRepository passwordRepository, IEncryptionService encryptionService) {
             _passwordRepository = passwordRepository;
             _encryptionService = encryptionService;
         }
@@ -41,8 +41,6 @@ namespace PasswordManager.Services {
 
         public async Task<List<PasswordDto>> GetPasswords(int userId, string token) {
             var derivedUserId = decodeJWT(token);
-            Console.WriteLine("It got here");
-            Console.WriteLine(derivedUserId);
 
             if (derivedUserId != userId) {
                 throw new InvalidEntityException(ResponseMessages.InvalidPasswords);
