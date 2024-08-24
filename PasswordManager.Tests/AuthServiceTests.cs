@@ -1,10 +1,8 @@
-using Microsoft.Extensions.Configuration;
 using Moq;
 using PasswordManager.Models;
 using PasswordManager.Models.DTOs;
 using PasswordManager.Repository;
 using PasswordManager.Services;
-using System;
 using System.Linq.Expressions;
 
 namespace PasswordManager.Tests {
@@ -13,16 +11,13 @@ namespace PasswordManager.Tests {
         private readonly AuthService _authService;
         private readonly Mock <IUserRepository> _mockRepository;
 
-        private readonly Mock<IConfiguration> _mockConfiguration;
-
         public AuthServiceTests() {
             _mockRepository = new Mock<IUserRepository>();
-            _mockConfiguration = new Mock<IConfiguration>();
-            _authService = new AuthService(_mockRepository.Object, _mockConfiguration.Object);
+            _authService = new AuthService(_mockRepository.Object);
         }
 
         [Fact]
-        public async Task   SignInUser_ShouldReturnAuthToken() {
+        public async Task   SignInUser_ShouldReturnAuthTokenIfLoginIsSuccessful() {
 
             LoginDto loginDto = new LoginDto {
                 Email = "test@gmail.com",

@@ -13,7 +13,6 @@ namespace PasswordManager.Tests {
     public class PasswordServiceTests {
         private readonly Mock<IPasswordRepository> _mockPasswordRepository;
         private readonly Mock<IEncryptionService> _mockEncryptionService;
-
         private readonly PasswordService _passwordService;
 
         public PasswordServiceTests() {
@@ -60,7 +59,12 @@ namespace PasswordManager.Tests {
         public async Task GetPasswords_ShouldReturnPasswordsIfUserIsValid() {
             var token = GenerateToken(1);
             var passwords = new List<Password> {
-                new Password { Id = 1, EmailOrUsername = "testUsername7", WebsiteUrl ="https://animefandom.com", WebsitePassword = "encryptedPassword", UserId = 1 }
+                new Password { 
+                    Id = 1, 
+                    EmailOrUsername = "testUsername7", 
+                    WebsiteUrl ="https://animefandom.com", 
+                    WebsitePassword = "encryptedPassword", 
+                    UserId = 1 }
             };
 
             _mockPasswordRepository

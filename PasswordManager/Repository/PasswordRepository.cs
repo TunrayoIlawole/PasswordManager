@@ -6,7 +6,7 @@ using PasswordManager.Models;
 namespace PasswordManager.Repository
 {
     public class PasswordRepository : IPasswordRepository {
-               private readonly PasswordManagerContext _dbContext;
+        private readonly PasswordManagerContext _dbContext;
         private readonly DbSet<Password> _dbSet;
 
         public PasswordRepository(PasswordManagerContext context) {

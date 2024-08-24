@@ -75,8 +75,6 @@ namespace PasswordManager.Controllers {
                 response.Message = e.Message;
                 return NotFound(response);
             } catch (Exception e) {
-                // log exception
-                Console.WriteLine(e.StackTrace);
                 response.Status = ResponseMessages.Failure;
                 response.Message = e.Message;
                 return StatusCode(StatusCodes.Status500InternalServerError, response);
