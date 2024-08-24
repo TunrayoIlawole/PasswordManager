@@ -5,7 +5,6 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
 using System.Text.Json.Serialization;
-using PasswordManager.Models;
 using PasswordManager.Repository;
 using PasswordManager.Services;
 
@@ -20,8 +19,8 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
             ValidateIssuer = false,
             ValidateAudience = true,
             ValidateLifetime = true,
-            ValidAudience = builder.Configuration["Jwt:Audience"],
-            IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(builder.Configuration["Jwt:SecretKey"]))
+            ValidAudience = Environment.GetEnvironmentVariable("JWT_AUDIENCE"),
+            IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(Environment.GetEnvironmentVariable("JWT_SECRET_KEY")))
         };
     });
 
@@ -37,11 +36,11 @@ builder.Services.AddControllers().AddJsonOptions(options =>
     options.JsonSerializerOptions.ReferenceHandler = ReferenceHandler.IgnoreCycles;
 });
 
-builder.Services.AddSingleton<EncryptionService>(sp => {
+builder.Services.AddSingleton<IEncryptionService>(sp => {
     string base64Key = Environment.GetEnvironmentVariable("ENCRYPTION_KEY");
 
     if (string.IsNullOrEmpty(base64Key)) {
-        throw new InvalidOperationException("Key not set");
+        throw new InvalidOperationException("Encryption key not set");
     }
     return new EncryptionService(base64Key);
 });

@@ -15,11 +15,11 @@ namespace PasswordManager.Services {
         private readonly string _issuer;
         private readonly string _audience;
 
-        public AuthService(IUserRepository userRepository, IConfiguration configuration) {
+        public AuthService(IUserRepository userRepository) {
             _userRepository = userRepository;
-            _secretKey = configuration["Jwt:SecretKey"];
-            _issuer = configuration["Jwt:Issuer"];
-            _audience = configuration["Jwt:Audience"];
+            _secretKey = Environment.GetEnvironmentVariable("JWT_SECRET_KEY");
+            _issuer = Environment.GetEnvironmentVariable("JWT_ISSUER");
+            _audience = Environment.GetEnvironmentVariable("JWT_AUDIENCE");
         }
 
         public async Task<string> SignInUser(LoginDto loginDto) {
@@ -44,7 +44,7 @@ namespace PasswordManager.Services {
                     new Claim("userId", userId.ToString()),
                     new Claim(ClaimTypes.Email, email)
                 ]),
-                Expires = DateTime.UtcNow.AddHours(1),
+                Expires = DateTime.UtcNow.AddMinutes(30),
                 Issuer = _issuer,
                 Audience = _audience,
                 SigningCredentials = credentials
