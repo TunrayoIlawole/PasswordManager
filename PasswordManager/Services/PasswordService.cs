@@ -68,11 +68,12 @@ namespace PasswordManager.Services {
             int userId = decodeJWT(token);
 
             var password = await _passwordRepository.GetByIdAsync(id);
-            string decryptedPassword = _encryptionService.DecryptPassword(password.WebsitePassword);
 
             if (password == null || userId != password.UserId) {
                 throw new InvalidEntityException(ResponseMessages.InvalidPassword);
             }
+
+            string decryptedPassword = _encryptionService.DecryptPassword(password.WebsitePassword);
 
             return new PasswordDetailDto {
                 EmailOrUsername = password.EmailOrUsername,
