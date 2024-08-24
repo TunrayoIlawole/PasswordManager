@@ -56,3 +56,22 @@ dotnet run
 cd PasswordManager.Tests
 dotnet test
 ```
+
+### Usage
+#### API Endpoints
+- Authentication
+  - `POST /api/User` - Register new user
+  - `POST /api/Auth/login` - Authenticate and retrieve a JWT
+ 
+- Password
+  - `POST /api/Password` - Add a new password
+  - `GET /api/Password/{id}` - View a password
+  - `PUT /api/Password/{id}` - Update an existing password
+  - `DELETE /api/Password/{id}` - Delete a password
+  - `GET /api/user/{userId}/passwords` - Get all passwords for a user
+ 
+### Technologies used
+- Backend: .NET 6, Entity Framework Core, JWT Authentication
+- Database: PostgreSQL
+- Testing: xUnit, Moq
+- Documentation: Swagger/OpenAPI
